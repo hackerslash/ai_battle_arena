@@ -159,6 +159,13 @@ function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+function randRotationSpeed() {
+  // Ensure rotation speed is never too close to 0
+  // Returns either -0.5 to -0.15 or 0.15 to 0.5
+  const speed = rand(0.15, 0.5);
+  return Math.random() < 0.5 ? speed : -speed;
+}
+
 // ===== Canvas Setup =====
 function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
@@ -191,9 +198,9 @@ function createBeacons() {
   const width = elements.canvas.clientWidth || 800;
   const height = elements.canvas.clientHeight || 500;
   return [
-    { x: width * 0.33, y: height * 0.3, rotation: rand(0, Math.PI * 2), rotationSpeed: rand(-0.5, 0.5) },
-    { x: width * 0.54, y: height * 0.52, rotation: rand(0, Math.PI * 2), rotationSpeed: rand(-0.5, 0.5) },
-    { x: width * 0.72, y: height * 0.32, rotation: rand(0, Math.PI * 2), rotationSpeed: rand(-0.5, 0.5) }
+    { x: width * 0.33, y: height * 0.3, rotation: rand(0, Math.PI * 2), rotationSpeed: randRotationSpeed() },
+    { x: width * 0.54, y: height * 0.52, rotation: rand(0, Math.PI * 2), rotationSpeed: randRotationSpeed() },
+    { x: width * 0.72, y: height * 0.32, rotation: rand(0, Math.PI * 2), rotationSpeed: randRotationSpeed() }
   ];
 }
 
@@ -224,7 +231,7 @@ function spawnBeacon() {
   }
 
   candidate.rotation = rand(0, Math.PI * 2);
-  candidate.rotationSpeed = rand(-0.5, 0.5);
+  candidate.rotationSpeed = randRotationSpeed();
   state.beacons.push(candidate);
 }
 
