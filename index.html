@@ -33,7 +33,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-ghost" id="rulesBtn">
+        <button class="btn btn-secondary" id="rulesBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <circle cx="12" cy="12" r="10" />
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
@@ -41,25 +41,22 @@
           </svg>
           Rules
         </button>
-        <button class="btn btn-ghost" id="resetBtn">
+        <button class="btn btn-secondary" id="resetBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <polyline points="23,4 23,10 17,10" />
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
           </svg>
           Reset
         </button>
-        <button class="btn btn-ghost" id="pauseBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <button class="btn btn-primary" id="playPauseBtn">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polygon points="5,3 19,12 5,21" />
+          </svg>
+          <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <rect x="6" y="4" width="4" height="16" />
             <rect x="14" y="4" width="4" height="16" />
           </svg>
-          Pause
-        </button>
-        <button class="btn btn-primary" id="startBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-            <polygon points="5,3 19,12 5,21" />
-          </svg>
-          Start Live Match
+          <span id="playPauseText">Start Match</span>
         </button>
       </div>
     </header>
@@ -90,49 +87,85 @@
         </div>
 
         <div class="model-cards">
-          <div class="model-card cobalt">
-            <div class="model-header">
-              <span class="model-label">Model A</span>
-              <span class="model-badge cobalt">Cobalt</span>
+          <div class="model-card cobalt collapsed" id="modelCardA">
+            <div class="model-toggle" id="modelToggleA" role="button" tabindex="0" aria-expanded="false">
+              <div>
+                <div class="model-header">
+                  <span class="model-label">Model A</span>
+                  <span class="model-badge cobalt">Cobalt</span>
+                </div>
+                <div class="model-summary">
+                  <span class="summary-label">Selected model</span>
+                  <span class="summary-value" id="summaryA">gpt-4o-mini</span>
+                </div>
+              </div>
+              <span class="chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
             </div>
-            <div class="input-group">
-              <label>Base URL</label>
-              <input type="text" id="baseUrlA" value="https://api.openai.com" placeholder="https://api.openai.com" />
-            </div>
-            <div class="input-group">
-              <label>Path</label>
-              <input type="text" id="pathA" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
-            </div>
-            <div class="input-group">
-              <label>Model</label>
-              <input type="text" id="modelA" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
-            </div>
-            <div class="input-group">
-              <label>API Key</label>
-              <input type="password" id="apiKeyA" placeholder="sk-..." />
+            <div class="model-body">
+              <div class="input-group">
+                <label>Base URL</label>
+                <input type="text" id="baseUrlA" value="https://api.openai.com" placeholder="https://api.openai.com" />
+              </div>
+              <div class="input-group">
+                <label>Path</label>
+                <input type="text" id="pathA" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+              </div>
+              <div class="input-group">
+                <label>Model</label>
+                <input type="text" id="modelA" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+              </div>
+              <div class="input-group">
+                <label>API Key</label>
+                <input type="password" id="apiKeyA" placeholder="sk-..." />
+              </div>
+              <div class="model-actions">
+                <button class="btn btn-primary btn-sm" id="saveModelA">Save Model A</button>
+              </div>
             </div>
           </div>
 
-          <div class="model-card ember">
-            <div class="model-header">
-              <span class="model-label">Model B</span>
-              <span class="model-badge ember">Ember</span>
+          <div class="model-card ember collapsed" id="modelCardB">
+            <div class="model-toggle" id="modelToggleB" role="button" tabindex="0" aria-expanded="false">
+              <div>
+                <div class="model-header">
+                  <span class="model-label">Model B</span>
+                  <span class="model-badge ember">Ember</span>
+                </div>
+                <div class="model-summary">
+                  <span class="summary-label">Selected model</span>
+                  <span class="summary-value" id="summaryB">gpt-4o-mini</span>
+                </div>
+              </div>
+              <span class="chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
             </div>
-            <div class="input-group">
-              <label>Base URL</label>
-              <input type="text" id="baseUrlB" value="https://api.openai.com" placeholder="https://api.openai.com" />
-            </div>
-            <div class="input-group">
-              <label>Path</label>
-              <input type="text" id="pathB" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
-            </div>
-            <div class="input-group">
-              <label>Model</label>
-              <input type="text" id="modelB" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
-            </div>
-            <div class="input-group">
-              <label>API Key</label>
-              <input type="password" id="apiKeyB" placeholder="sk-..." />
+            <div class="model-body">
+              <div class="input-group">
+                <label>Base URL</label>
+                <input type="text" id="baseUrlB" value="https://api.openai.com" placeholder="https://api.openai.com" />
+              </div>
+              <div class="input-group">
+                <label>Path</label>
+                <input type="text" id="pathB" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+              </div>
+              <div class="input-group">
+                <label>Model</label>
+                <input type="text" id="modelB" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+              </div>
+              <div class="input-group">
+                <label>API Key</label>
+                <input type="password" id="apiKeyB" placeholder="sk-..." />
+              </div>
+              <div class="model-actions">
+                <button class="btn btn-primary btn-sm" id="saveModelB">Save Model B</button>
+              </div>
             </div>
           </div>
         </div>
@@ -171,6 +204,7 @@
             <h2>Battle Arena</h2>
             <p>Real-time space shooter</p>
           </div>
+          <div class="timer-display" id="timerDisplay">5:00</div>
           <div class="scoreboard">
             <div class="score-card cobalt">
               <span>Model A</span>
@@ -230,14 +264,46 @@
 
         <div class="intent-cards">
           <div class="intent-card cobalt">
-            <span class="intent-label">Model A Intent</span>
+            <div class="intent-header">
+              <span class="intent-label">Model A Intent</span>
+              <span class="thinking-indicator hidden" id="thinkingA">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+              </span>
+            </div>
             <p id="intentA">Waiting...</p>
           </div>
           <div class="intent-card ember">
-            <span class="intent-label">Model B Intent</span>
+            <div class="intent-header">
+              <span class="intent-label">Model B Intent</span>
+              <span class="thinking-indicator hidden" id="thinkingB">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+              </span>
+            </div>
             <p id="intentB">Waiting...</p>
           </div>
         </div>
+
+        <div class="history-section">
+          <button class="btn btn-ghost btn-sm" id="toggleHistoryA">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            History A
+          </button>
+          <button class="btn btn-ghost btn-sm" id="toggleHistoryB">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            History B
+          </button>
+        </div>
+
+        <div class="history-viewer hidden" id="historyViewerA"></div>
+        <div class="history-viewer hidden" id="historyViewerB"></div>
       </section>
     </main>
 
@@ -284,6 +350,28 @@
             <p>When a beacon is hit, a new beacon spawns elsewhere in the arena.</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal hidden" id="gameOverModal">
+      <div class="modal-backdrop" id="gameOverBackdrop"></div>
+      <div class="modal-content game-over">
+        <div class="game-over-header">
+          <h2 id="gameOverTitle">Game Over</h2>
+          <p id="gameOverMessage"></p>
+        </div>
+        <div class="final-scores">
+          <div class="score-card cobalt">
+            <span>Model A</span>
+            <strong id="finalScoreA">0</strong>
+          </div>
+          <div class="score-card ember">
+            <span>Model B</span>
+            <strong id="finalScoreB">0</strong>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="gameOverReset">Play Again</button>
       </div>
     </div>
   </div>

@@ -3,8 +3,10 @@ import './style.css';
 // ===== DOM Elements =====
 const elements = {
   // Header
-  startBtn: document.getElementById('startBtn'),
-  pauseBtn: document.getElementById('pauseBtn'),
+  playPauseBtn: document.getElementById('playPauseBtn'),
+  playIcon: document.getElementById('playIcon'),
+  pauseIcon: document.getElementById('pauseIcon'),
+  playPauseText: document.getElementById('playPauseText'),
   resetBtn: document.getElementById('resetBtn'),
   rulesBtn: document.getElementById('rulesBtn'),
   liveStatus: document.getElementById('liveStatus'),
@@ -21,15 +23,24 @@ const elements = {
   pathA: document.getElementById('pathA'),
   modelA: document.getElementById('modelA'),
   apiKeyA: document.getElementById('apiKeyA'),
+  modelCardA: document.getElementById('modelCardA'),
+  modelToggleA: document.getElementById('modelToggleA'),
+  saveModelA: document.getElementById('saveModelA'),
+  summaryA: document.getElementById('summaryA'),
   baseUrlB: document.getElementById('baseUrlB'),
   pathB: document.getElementById('pathB'),
   modelB: document.getElementById('modelB'),
   apiKeyB: document.getElementById('apiKeyB'),
+  modelCardB: document.getElementById('modelCardB'),
+  modelToggleB: document.getElementById('modelToggleB'),
+  saveModelB: document.getElementById('saveModelB'),
+  summaryB: document.getElementById('summaryB'),
   useProxy: document.getElementById('useProxy'),
   proxyUrl: document.getElementById('proxyUrl'),
 
   // Arena
   canvas: document.getElementById('arenaCanvas'),
+  timerDisplay: document.getElementById('timerDisplay'),
   scoreA: document.getElementById('scoreA'),
   scoreB: document.getElementById('scoreB'),
   pulseStat: document.getElementById('pulseStat'),
@@ -42,11 +53,26 @@ const elements = {
   clearLog: document.getElementById('clearLog'),
   intentA: document.getElementById('intentA'),
   intentB: document.getElementById('intentB'),
+  thinkingA: document.getElementById('thinkingA'),
+  thinkingB: document.getElementById('thinkingB'),
+  toggleHistoryA: document.getElementById('toggleHistoryA'),
+  toggleHistoryB: document.getElementById('toggleHistoryB'),
+  historyViewerA: document.getElementById('historyViewerA'),
+  historyViewerB: document.getElementById('historyViewerB'),
 
   // Modal
   rulesModal: document.getElementById('rulesModal'),
   rulesBackdrop: document.getElementById('rulesBackdrop'),
   rulesClose: document.getElementById('rulesClose'),
+
+  // Game Over Modal
+  gameOverModal: document.getElementById('gameOverModal'),
+  gameOverBackdrop: document.getElementById('gameOverBackdrop'),
+  gameOverTitle: document.getElementById('gameOverTitle'),
+  gameOverMessage: document.getElementById('gameOverMessage'),
+  finalScoreA: document.getElementById('finalScoreA'),
+  finalScoreB: document.getElementById('finalScoreB'),
+  gameOverReset: document.getElementById('gameOverReset'),
 };
 
 const ctx = elements.canvas.getContext('2d');
@@ -57,7 +83,8 @@ const PHYSICS_RATE = 60;
 const ACTION_RATE = 12;
 const PROJECTILE_SPEED = 260;
 const BEACON_HIT_RADIUS = 22;
-const SHIP_HIT_RADIUS = 18;
+const SHIP_HIT_RADIUS = 32; // Match visual ship size (70px / 2 ≈ 35, reduced slightly for edge tolerance)
+const GAME_TIME_LIMIT = 300; // 5 minutes in seconds
 
 const palette = {
   cobalt: '#4da0ff',
@@ -156,7 +183,9 @@ function createShip(index) {
     score: 0,
     lastAction: { action: 'move', turn: 0, move: 0 },
     intent: '',
-    continuousMove: 0 // Speed for continuous movement
+    vx: 0, // Velocity X for smooth movement
+    vy: 0, // Velocity Y for smooth movement
+    targetSpeed: 0 // Target speed for easing
   };
 }
 
@@ -232,6 +261,19 @@ function updateHud() {
   elements.pulseStat.textContent = state.shots.toString();
   elements.beaconStat.textContent = state.beaconHits.toString();
   elements.impactStat.textContent = state.shipHits.toString();
+
+  // Update timer display
+  const remainingTime = Math.max(0, GAME_TIME_LIMIT - state.time);
+  const minutes = Math.floor(remainingTime / 60);
+  const seconds = Math.floor(remainingTime % 60);
+  elements.timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+  // Add warning style when time is low
+  if (remainingTime <= 30 && remainingTime > 0) {
+    elements.timerDisplay.classList.add('warning');
+  } else {
+    elements.timerDisplay.classList.remove('warning');
+  }
 }
 
 // ===== Config Persistence =====
@@ -285,6 +327,24 @@ function loadConfig() {
   }
 }
 
+function updateModelSummary(modelId) {
+  const summaryEl = modelId === 0 ? elements.summaryA : elements.summaryB;
+  const modelValue = modelId === 0 ? elements.modelA.value : elements.modelB.value;
+  summaryEl.textContent = modelValue.trim() || 'Unconfigured';
+}
+
+function setModelCollapsed(modelId, collapsed) {
+  const card = modelId === 0 ? elements.modelCardA : elements.modelCardB;
+  const toggle = modelId === 0 ? elements.modelToggleA : elements.modelToggleB;
+  card.classList.toggle('collapsed', collapsed);
+  toggle.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function toggleModelCard(modelId) {
+  const card = modelId === 0 ? elements.modelCardA : elements.modelCardB;
+  setModelCollapsed(modelId, !card.classList.contains('collapsed'));
+}
+
 // ===== Logging =====
 function logEvent(modelId, title, message) {
   const entry = document.createElement('div');
@@ -326,6 +386,52 @@ function closeRules() {
   elements.rulesModal.classList.add('hidden');
 }
 
+function showGameOver(winner, reason) {
+  pauseMatch();
+  elements.gameOverTitle.textContent = 'Game Over';
+  elements.gameOverMessage.textContent = reason;
+  elements.finalScoreA.textContent = Math.round(state.ships[0]?.score || 0).toString();
+  elements.finalScoreB.textContent = Math.round(state.ships[1]?.score || 0).toString();
+  elements.gameOverModal.classList.remove('hidden');
+}
+
+function closeGameOver() {
+  elements.gameOverModal.classList.add('hidden');
+}
+
+function toggleHistory(modelId) {
+  const viewer = modelId === 0 ? elements.historyViewerA : elements.historyViewerB;
+  const isHidden = viewer.classList.contains('hidden');
+
+  if (isHidden) {
+    updateHistoryViewer(modelId);
+    viewer.classList.remove('hidden');
+  } else {
+    viewer.classList.add('hidden');
+  }
+}
+
+function updateHistoryViewer(modelId) {
+  const viewer = modelId === 0 ? elements.historyViewerA : elements.historyViewerB;
+  const history = conversationHistory[modelId];
+
+  if (history.length === 0) {
+    viewer.innerHTML = '<p style="color: var(--text-muted); font-size: 12px;">No conversation history yet.</p>';
+    return;
+  }
+
+  viewer.innerHTML = history.map((msg, idx) => {
+    const roleLabel = msg.role === 'system' ? 'System' : msg.role === 'user' ? 'Game State' : 'Model Response';
+    const content = msg.role === 'assistant' ? msg.content : msg.content.substring(0, 500) + (msg.content.length > 500 ? '...' : '');
+    return `
+      <div class="history-message">
+        <div class="history-message-role">${roleLabel} #${idx + 1}</div>
+        <div class="history-message-content">${content}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 // ===== Status =====
 function setLiveStatus(text, state) {
   elements.liveStatus.textContent = text;
@@ -337,33 +443,35 @@ function setLiveStatus(text, state) {
 
 // ===== AI Model Integration =====
 function buildSystemPrompt() {
-  return `You are an AI pilot in a realtime space shooter.
+  return `You are an AI pilot in a realtime space shooter. Respond with JSON only.
 
-Game rules:
-- Continuous time. Actions are requested ~12Hz; physics updates ~60Hz.
-- Ships can turn in degrees and move in units.
-- Fire launches a ball projectile in the facing direction.
-- Hitting a beacon (asteroid) awards +5 points and spawns a new beacon.
-- Hitting the other ship with a projectile costs the shooter -5 points.
-- CRITICAL: If your ship collides with an asteroid (beacon), the game ends immediately. Avoid asteroids at all costs!
+Rules:
+- Hit beacons: +5pts. Hit opponent: -5pts (opponent loses points!). Collide with beacon: GAME OVER.
+- Actions: turn (degrees), move (units), fire (projectile).
 
-Board context:
-- You receive board.width and board.height representing the arena boundaries.
-- Coordinates: top-left is (0,0), x increases right, y increases down.
-- lastEvents contains recent game events including your actions and hit results (hit_beacon, hit_opponent).
+Coordinates:
+- (0,0) = top-left. x right, y down.
+- self.angleDegrees: Shows where YOUR nozzle/gun is aimed. 0°=right, 90°=down, 180°=left, -90°=up.
+- turn is DELTA added to current angle.
 
-Ship orientation and aiming:
-- self.angleDegrees tells you which direction your ship is pointing.
-- 0° points right (East), 90° points down (South), 180° points left (West), -90° points up (North).
-- The "turn" field is a DELTA that gets ADDED to your current angle.
-- To hit a beacon: calculate targetAngle = atan2(by - sy, bx - sx) * 180 / PI, then turn by (targetAngle - self.angleDegrees).
+Context includes lastEvents (recent 4 events):
+- "hit_beacon": You scored +5pts
+- "hit_opponent": You hit enemy, YOU lose -5pts
+- "got_hit": Enemy hit YOU (they lose -5pts)
+- Strategy: Getting hit deliberately hurts opponent's score!
 
-Response JSON schema (no extra text):
+CRITICAL - Lead your shots:
+- Projectiles travel at board.projectileSpeed units/sec.
+- Calculate time: distance / projectileSpeed.
+- Aim where target WILL BE, not where it IS.
+- Use opponent.lastAction to predict movement.
+
+JSON response (no text):
 {
   "action": "turn|move|fire",
   "turn": -180..180,
   "move": 0..120,
-  "intent": "short strategy note"
+  "intent": "brief note"
 }`;
 }
 
@@ -375,7 +483,12 @@ function buildContext(modelId) {
 
   return {
     time: Number(state.time.toFixed(2)),
-    board: { width: Number(width.toFixed(1)), height: Number(height.toFixed(1)) },
+    timestamp: Date.now(), // For detecting stale responses
+    board: {
+      width: Number(width.toFixed(1)),
+      height: Number(height.toFixed(1)),
+      projectileSpeed: PROJECTILE_SPEED // Help models calculate lead time
+    },
     self: {
       x: Number(self.x.toFixed(1)),
       y: Number(self.y.toFixed(1)),
@@ -386,7 +499,8 @@ function buildContext(modelId) {
       x: Number(opponent.x.toFixed(1)),
       y: Number(opponent.y.toFixed(1)),
       score: Number(opponent.score.toFixed(1)),
-      hitRadius: SHIP_HIT_RADIUS
+      hitRadius: SHIP_HIT_RADIUS,
+      lastAction: opponent.lastAction.action // Predict opponent movement
     },
     beacons: state.beacons.map(b => ({
       x: Number(b.x.toFixed(1)),
@@ -429,8 +543,13 @@ function normalizeAction(action) {
 }
 
 async function requestAction(modelId) {
+  // Critical: Check both running state AND in-flight status
   if (!running || inFlight[modelId]) return;
+
   inFlight[modelId] = true;
+
+  const thinkingEl = modelId === 0 ? elements.thinkingA : elements.thinkingB;
+  thinkingEl.classList.remove('hidden');
 
   const els = modelId === 0
     ? { baseUrl: elements.baseUrlA, path: elements.pathA, model: elements.modelA, apiKey: elements.apiKeyA }
@@ -442,13 +561,15 @@ async function requestAction(modelId) {
   const apiKey = els.apiKey.value.trim();
 
   if (!baseUrl || !model || !apiKey || !path) {
+    thinkingEl.classList.add('hidden');
     inFlight[modelId] = false;
     return;
   }
 
   try {
     const context = buildContext(modelId);
-    const prompt = `Arena context JSON:\n${JSON.stringify(context, null, 2)}\n\nReturn JSON only.`;
+    // Compact JSON (no formatting) for faster processing
+    const prompt = `${JSON.stringify(context)}`;
     const url = `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
     const useResponses = path.includes('/responses');
 
@@ -461,12 +582,11 @@ async function requestAction(modelId) {
     // Add user message with current game state
     conversationHistory[modelId].push({ role: 'user', content: prompt });
 
-    // Keep conversation history manageable (last 20 messages = ~10 turns)
-    if (conversationHistory[modelId].length > 21) {
-      // Keep system message + last 20 messages
+    // Keep history SHORT for faster responses (system + last 6 messages = 3 turns)
+    if (conversationHistory[modelId].length > 7) {
       conversationHistory[modelId] = [
         conversationHistory[modelId][0],
-        ...conversationHistory[modelId].slice(-20)
+        ...conversationHistory[modelId].slice(-6)
       ];
     }
 
@@ -474,6 +594,7 @@ async function requestAction(modelId) {
       ? { model, input: conversationHistory[modelId].map(m => m.content).join('\n\n') }
       : { model, messages: conversationHistory[modelId] };
 
+    const startTime = performance.now();
     let response;
     if (elements.useProxy.checked && elements.proxyUrl.value.trim()) {
       response = await fetch(elements.proxyUrl.value.trim(), {
@@ -495,6 +616,8 @@ async function requestAction(modelId) {
     }
 
     const data = await response.json();
+    const latency = performance.now() - startTime;
+
     const message = useResponses
       ? data?.output?.[0]?.content?.[0]?.text ?? data?.output_text ?? ''
       : data?.choices?.[0]?.message?.content ?? '';
@@ -507,6 +630,7 @@ async function requestAction(modelId) {
       intentEl.textContent = 'Invalid JSON response';
       // Remove the invalid user message from history
       conversationHistory[modelId].pop();
+      thinkingEl.classList.add('hidden');
       inFlight[modelId] = false;
       return;
     }
@@ -514,8 +638,22 @@ async function requestAction(modelId) {
     // Add assistant response to history
     conversationHistory[modelId].push({ role: 'assistant', content: message });
 
+    // Update history viewer if visible
+    const viewer = modelId === 0 ? elements.historyViewerA : elements.historyViewerB;
+    if (!viewer.classList.contains('hidden')) {
+      updateHistoryViewer(modelId);
+    }
+
+    // CRITICAL: Check if game is still running before applying action
+    // This prevents stale responses from being applied after pause
+    if (!running) {
+      thinkingEl.classList.add('hidden');
+      inFlight[modelId] = false;
+      return;
+    }
+
     const normalized = normalizeAction(action);
-    applyAction(modelId, normalized);
+    applyAction(modelId, normalized, latency);
   } catch (error) {
     const who = modelId === 0 ? 'Model A' : 'Model B';
     logEvent(modelId, who, `Error: ${error.message}`);
@@ -526,10 +664,11 @@ async function requestAction(modelId) {
     }
   }
 
+  thinkingEl.classList.add('hidden');
   inFlight[modelId] = false;
 }
 
-function applyAction(modelId, action) {
+function applyAction(modelId, action, latency = 0) {
   const ship = state.ships[modelId];
   ship.lastAction = action;
   ship.intent = action.intent || ship.intent;
@@ -540,13 +679,23 @@ function applyAction(modelId, action) {
   switch (action.action) {
     case 'turn':
       ship.angle += (action.turn * Math.PI) / 180;
-      ship.continuousMove = 0; // Stop continuous movement on turn
+      // Stop movement on turn for cleaner animations
+      ship.targetSpeed = 0;
+      ship.vx *= 0.3; // Quick deceleration
+      ship.vy *= 0.3;
       break;
     case 'move':
-      if (action.turn) ship.angle += (action.turn * Math.PI) / 180;
-      ship.x += Math.cos(ship.angle) * action.move;
-      ship.y += Math.sin(ship.angle) * action.move;
-      ship.continuousMove = action.move; // Set continuous movement speed
+      // Apply turn if included, then move in that direction
+      if (action.turn) {
+        ship.angle += (action.turn * Math.PI) / 180;
+      }
+      // Set target velocity for smooth eased movement
+      ship.targetSpeed = action.move;
+      const targetVx = Math.cos(ship.angle) * action.move;
+      const targetVy = Math.sin(ship.angle) * action.move;
+      // Quick acceleration to target velocity
+      ship.vx = targetVx;
+      ship.vy = targetVy;
       if (assetsLoaded && action.move > 0) {
         assets.moveSound.currentTime = 0;
         assets.moveSound.volume = 0.2;
@@ -564,7 +713,10 @@ function applyAction(modelId, action) {
         owner: modelId,
         life: 5.0
       });
-      ship.continuousMove = 0; // Stop continuous movement when firing
+      // Decelerate on fire for recoil effect
+      ship.targetSpeed *= 0.5;
+      ship.vx *= 0.5;
+      ship.vy *= 0.5;
       if (assetsLoaded) {
         assets.fireSound.currentTime = 0;
         assets.fireSound.volume = 0.3;
@@ -574,7 +726,8 @@ function applyAction(modelId, action) {
   }
 
   const who = modelId === 0 ? 'Model A' : 'Model B';
-  logEvent(modelId, who, `${action.action} | ${action.intent || 'No intent'}`);
+  const latencyStr = latency > 0 ? ` | ${latency.toFixed(0)}ms` : '';
+  logEvent(modelId, who, `${action.action}${latencyStr} | ${action.intent || 'No intent'}`);
   state.lastEvents.unshift({ model: modelId, action: action.action, intent: action.intent || '' });
   state.lastEvents = state.lastEvents.slice(0, 12);
 }
@@ -586,12 +739,20 @@ function updatePhysics(dt) {
   const height = elements.canvas.clientHeight;
   const padding = 40;
 
-  // Apply continuous movement to ships while waiting for new actions
+  // Apply smooth velocity-based movement with deceleration (ease-out)
   state.ships.forEach(ship => {
-    if (ship.continuousMove > 0) {
-      ship.x += Math.cos(ship.angle) * ship.continuousMove * dt * 60; // Scale by dt * 60 for frame-rate independence
-      ship.y += Math.sin(ship.angle) * ship.continuousMove * dt * 60;
-    }
+    // Apply deceleration - "fast then slow" speed ramp
+    const deceleration = 0.92; // Smooth ease-out (higher = slower deceleration)
+    ship.vx *= deceleration;
+    ship.vy *= deceleration;
+
+    // Stop completely when velocity is very low
+    if (Math.abs(ship.vx) < 0.1) ship.vx = 0;
+    if (Math.abs(ship.vy) < 0.1) ship.vy = 0;
+
+    // Apply velocity to position
+    ship.x += ship.vx * dt * 60;
+    ship.y += ship.vy * dt * 60;
   });
 
   // Constrain ships
@@ -608,14 +769,34 @@ function updatePhysics(dt) {
       if (distance < SHIP_HIT_RADIUS + BEACON_HIT_RADIUS) {
         // Game over!
         const who = ship.id === 0 ? 'Model A' : 'Model B';
+        const winner = ship.id === 0 ? 'Model B' : 'Model A';
         logEvent(ship.id, who, 'CRASHED INTO ASTEROID - GAME OVER!');
-        pauseMatch();
-        elements.ticker.textContent = `${who} collided with an asteroid! Game Over.`;
-        elements.ticker.classList.add('error');
+        showGameOver(winner, `${who} collided with an asteroid!`);
         return;
       }
     }
   });
+
+  // Check time limit (5 minutes)
+  if (state.time >= GAME_TIME_LIMIT) {
+    const scoreA = state.ships[0].score;
+    const scoreB = state.ships[1].score;
+    let winner, reason;
+
+    if (scoreA > scoreB) {
+      winner = 'Model A';
+      reason = `Time's up! Model A wins with ${Math.round(scoreA)} points!`;
+    } else if (scoreB > scoreA) {
+      winner = 'Model B';
+      reason = `Time's up! Model B wins with ${Math.round(scoreB)} points!`;
+    } else {
+      winner = 'Draw';
+      reason = `Time's up! It's a tie at ${Math.round(scoreA)} points!`;
+    }
+
+    showGameOver(winner, reason);
+    return;
+  }
 
   // Update beacon rotations
   state.beacons.forEach(beacon => {
@@ -640,10 +821,13 @@ function updatePhysics(dt) {
       state.ships[projectile.owner].score -= 5;
       state.shipHits++;
       const who = projectile.owner === 0 ? 'Model A' : 'Model B';
+      const victimWho = targetId === 0 ? 'Model A' : 'Model B';
       logEvent(projectile.owner, who, 'Hit opponent: -5 pts');
+      logEvent(targetId, victimWho, 'Got hit by opponent');
       state.bursts.push({ x: target.x, y: target.y, life: 0.6, maxLife: 0.6, intensity: 0.8, type: 'impact' });
-      // Add to events so model knows about the hit
+      // Add events so BOTH models know about the hit
       state.lastEvents.unshift({ model: projectile.owner, action: 'hit_opponent', score: -5 });
+      state.lastEvents.unshift({ model: targetId, action: 'got_hit', score: 0 });
       state.lastEvents = state.lastEvents.slice(0, 12);
       return;
     }
@@ -915,36 +1099,32 @@ function scheduleActions() {
   actionTimers[1] = setInterval(() => requestAction(1), interval + rand(-60, 80));
 }
 
-// ===== Event Listeners =====
-elements.startBtn.addEventListener('click', startMatch);
+// ===== Button State =====
+function updatePlayPauseButton() {
+  if (running) {
+    elements.playIcon.classList.add('hidden');
+    elements.pauseIcon.classList.remove('hidden');
+    elements.playPauseText.textContent = 'Pause';
+  } else {
+    elements.playIcon.classList.remove('hidden');
+    elements.pauseIcon.classList.add('hidden');
+    elements.playPauseText.textContent = 'Start Match';
+  }
+}
 
-elements.pauseBtn.addEventListener('click', () => {
+// ===== Event Listeners =====
+elements.playPauseBtn.addEventListener('click', () => {
   if (running) {
     pauseMatch();
-    elements.pauseBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-        <polygon points="5,3 19,12 5,21"/>
-      </svg>
-      Resume
-    `;
     if (musicStarted && assetsLoaded) assets.music.pause();
+    updatePlayPauseButton();
   } else {
     if (hasError) {
-      elements.ticker.textContent = 'Resolve the error before resuming.';
+      elements.ticker.textContent = 'Resolve the error before starting.';
       return;
     }
-    running = true;
-    setLiveStatus('Live', 'live');
-    elements.ticker.textContent = 'Match resumed.';
-    elements.pauseBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-        <rect x="6" y="4" width="4" height="16"/>
-        <rect x="14" y="4" width="4" height="16"/>
-      </svg>
-      Pause
-    `;
-    scheduleActions();
-    if (musicStarted && assetsLoaded) assets.music.play().catch(() => { });
+    startMatch();
+    updatePlayPauseButton();
   }
 });
 
@@ -952,13 +1132,7 @@ elements.resetBtn.addEventListener('click', () => {
   pauseMatch();
   hideError();
   resetGame();
-  elements.pauseBtn.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-      <rect x="6" y="4" width="4" height="16"/>
-      <rect x="14" y="4" width="4" height="16"/>
-    </svg>
-    Pause
-  `;
+  updatePlayPauseButton();
   if (musicStarted && assetsLoaded) {
     assets.music.pause();
     assets.music.currentTime = 0;
@@ -970,6 +1144,9 @@ elements.clearLog.addEventListener('click', () => {
   elements.logStream.innerHTML = '';
 });
 
+elements.toggleHistoryA.addEventListener('click', () => toggleHistory(0));
+elements.toggleHistoryB.addEventListener('click', () => toggleHistory(1));
+
 elements.errorDismiss.addEventListener('click', hideError);
 elements.errorReset.addEventListener('click', () => {
   hideError();
@@ -980,14 +1157,56 @@ elements.rulesBtn.addEventListener('click', openRules);
 elements.rulesBackdrop.addEventListener('click', closeRules);
 elements.rulesClose.addEventListener('click', closeRules);
 
+elements.gameOverBackdrop.addEventListener('click', closeGameOver);
+elements.gameOverReset.addEventListener('click', () => {
+  closeGameOver();
+  resetGame();
+});
+
 window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeRules();
+  if (e.key === 'Escape') {
+    closeRules();
+    const gameOverModal = document.getElementById('gameOverModal');
+    if (gameOverModal && !gameOverModal.classList.contains('hidden')) {
+      gameOverModal.classList.add('hidden');
+    }
+  }
+  if (e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault();
+    elements.playPauseBtn.click();
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    elements.resetBtn.click();
+  }
+});
+
+// Model form behavior
+elements.modelToggleA.addEventListener('click', () => toggleModelCard(0));
+elements.modelToggleB.addEventListener('click', () => toggleModelCard(1));
+[elements.modelToggleA, elements.modelToggleB].forEach((toggle, idx) => {
+  toggle.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      toggleModelCard(idx);
+    }
+  });
+});
+
+elements.saveModelA.addEventListener('click', () => {
+  saveConfig();
+  updateModelSummary(0);
+  setModelCollapsed(0, true);
+});
+
+elements.saveModelB.addEventListener('click', () => {
+  saveConfig();
+  updateModelSummary(1);
+  setModelCollapsed(1, true);
 });
 
 // Config persistence
-[elements.baseUrlA, elements.pathA, elements.modelA, elements.apiKeyA,
-elements.baseUrlB, elements.pathB, elements.modelB, elements.apiKeyB,
-elements.proxyUrl].forEach(input => {
+[elements.proxyUrl].forEach(input => {
   input.addEventListener('input', saveConfig);
 });
 elements.useProxy.addEventListener('change', saveConfig);
@@ -1019,5 +1238,10 @@ window.addEventListener('resize', () => {
 loadAssets();
 resizeCanvas();
 loadConfig();
+updateModelSummary(0);
+updateModelSummary(1);
+setModelCollapsed(0, true);
+setModelCollapsed(1, true);
+updatePlayPauseButton();
 resetGame();
 requestAnimationFrame(loop);
