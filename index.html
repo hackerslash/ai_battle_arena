@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Battle Arena - Where AI Models Fight</title>
+  <meta name="description"
+    content="A real-time space shooter where AI models compete against each other in an epic battleship arena." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" />
+            <line x1="12" y1="22" x2="12" y2="15.5" />
+            <polyline points="22,8.5 12,15.5 2,8.5" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>AI Battle Arena</h1>
+          <span>Where AI models fight</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" id="rulesBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12" y2="17" />
+          </svg>
+          Rules
+        </button>
+        <button class="btn btn-ghost" id="resetBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polyline points="23,4 23,10 17,10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+          </svg>
+          Reset
+        </button>
+        <button class="btn btn-ghost" id="pauseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <rect x="6" y="4" width="4" height="16" />
+            <rect x="14" y="4" width="4" height="16" />
+          </svg>
+          Pause
+        </button>
+        <button class="btn btn-primary" id="startBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polygon points="5,3 19,12 5,21" />
+          </svg>
+          Start Live Match
+        </button>
+      </div>
+    </header>
+
+    <!-- Error Banner -->
+    <div class="error-banner hidden" id="errorBanner">
+      <div class="error-icon">!</div>
+      <div class="error-content">
+        <strong id="errorTitle">API Error</strong>
+        <p id="errorMessage"></p>
+      </div>
+      <div class="error-actions">
+        <button class="btn btn-ghost btn-sm" id="errorDismiss">Dismiss</button>
+        <button class="btn btn-primary btn-sm" id="errorReset">Reset Match</button>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <main class="layout">
+      <!-- Config Panel -->
+      <section class="panel config-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Model Configuration</h2>
+            <p>OpenAI-compatible endpoints</p>
+          </div>
+          <div class="status-pill" id="liveStatus">Idle</div>
+        </div>
+
+        <div class="model-cards">
+          <div class="model-card cobalt">
+            <div class="model-header">
+              <span class="model-label">Model A</span>
+              <span class="model-badge cobalt">Cobalt</span>
+            </div>
+            <div class="input-group">
+              <label>Base URL</label>
+              <input type="text" id="baseUrlA" value="https://api.openai.com" placeholder="https://api.openai.com" />
+            </div>
+            <div class="input-group">
+              <label>Path</label>
+              <input type="text" id="pathA" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+            </div>
+            <div class="input-group">
+              <label>Model</label>
+              <input type="text" id="modelA" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+            </div>
+            <div class="input-group">
+              <label>API Key</label>
+              <input type="password" id="apiKeyA" placeholder="sk-..." />
+            </div>
+          </div>
+
+          <div class="model-card ember">
+            <div class="model-header">
+              <span class="model-label">Model B</span>
+              <span class="model-badge ember">Ember</span>
+            </div>
+            <div class="input-group">
+              <label>Base URL</label>
+              <input type="text" id="baseUrlB" value="https://api.openai.com" placeholder="https://api.openai.com" />
+            </div>
+            <div class="input-group">
+              <label>Path</label>
+              <input type="text" id="pathB" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+            </div>
+            <div class="input-group">
+              <label>Model</label>
+              <input type="text" id="modelB" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+            </div>
+            <div class="input-group">
+              <label>API Key</label>
+              <input type="password" id="apiKeyB" placeholder="sk-..." />
+            </div>
+          </div>
+        </div>
+
+        <div class="proxy-section">
+          <div class="proxy-header">
+            <label class="toggle">
+              <input type="checkbox" id="useProxy" checked />
+              <span class="toggle-slider"></span>
+              <span>Use Proxy Server</span>
+            </label>
+          </div>
+          <div class="input-group">
+            <label>Proxy URL</label>
+            <input type="text" id="proxyUrl" value="http://localhost:8787/proxy"
+              placeholder="http://localhost:8787/proxy" />
+          </div>
+          <p class="hint">Run <code>node server.js</code> locally to avoid CORS issues.</p>
+        </div>
+
+        <div class="methods-section">
+          <h3>Available Actions</h3>
+          <div class="method-chips">
+            <span class="method-chip">turn(deg: -180..180)</span>
+            <span class="method-chip">move(units: 0..120)</span>
+            <span class="method-chip">fire()</span>
+          </div>
+          <p class="hint">Models respond with JSON: {"action": "move", "move": 40, "intent": "..."}</p>
+        </div>
+      </section>
+
+      <!-- Arena Panel -->
+      <section class="panel arena-panel">
+        <div class="arena-header">
+          <div>
+            <h2>Battle Arena</h2>
+            <p>Real-time space shooter</p>
+          </div>
+          <div class="scoreboard">
+            <div class="score-card cobalt">
+              <span>Model A</span>
+              <strong id="scoreA">0</strong>
+            </div>
+            <div class="score-card ember">
+              <span>Model B</span>
+              <strong id="scoreB">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="arena-container">
+          <canvas id="arenaCanvas"></canvas>
+          <div class="arena-stats">
+            <div class="stat-item">
+              <span>Shots</span>
+              <strong id="pulseStat">0</strong>
+            </div>
+            <div class="stat-item">
+              <span>Beacon Hits</span>
+              <strong id="beaconStat">0</strong>
+            </div>
+            <div class="stat-item">
+              <span>Ship Hits</span>
+              <strong id="impactStat">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="arena-footer">
+          <div class="objective-cards">
+            <div class="objective-card">
+              <strong>Objective</strong>
+              <span>Hit beacons with shots to score. New beacon spawns after each hit.</span>
+            </div>
+            <div class="objective-card">
+              <strong>Scoring</strong>
+              <span>Beacon hit: +5 pts. Ship hit: -5 pts to shooter.</span>
+            </div>
+          </div>
+          <div class="ticker" id="ticker">Awaiting start signal...</div>
+        </div>
+      </section>
+
+      <!-- Log Panel -->
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Live Feed</h2>
+            <p>Real-time actions & reasoning</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="clearLog">Clear</button>
+        </div>
+
+        <div class="log-stream" id="logStream"></div>
+
+        <div class="intent-cards">
+          <div class="intent-card cobalt">
+            <span class="intent-label">Model A Intent</span>
+            <p id="intentA">Waiting...</p>
+          </div>
+          <div class="intent-card ember">
+            <span class="intent-label">Model B Intent</span>
+            <p id="intentB">Waiting...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Rules Modal -->
+    <div class="modal hidden" id="rulesModal">
+      <div class="modal-backdrop" id="rulesBackdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h2>Game Rules</h2>
+            <p>Space shooter duel with beacon targets</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="rulesClose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="rule-item">
+            <div class="rule-icon">🎮</div>
+            <p>Actions are continuous. Models send <code>turn</code>, <code>move</code>, or <code>fire</code> actions.
+            </p>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">🔄</div>
+            <p>Turn uses degrees (negative/positive). Move uses units (0-120).</p>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">🔥</div>
+            <p><code>fire</code> launches a projectile in the facing direction.</p>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">🎯</div>
+            <p>If a shot hits a beacon (asteroid), the shooter gains <strong>+5 points</strong>.</p>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">💥</div>
+            <p>If a shot hits the other ship, the shooter loses <strong>-5 points</strong>.</p>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">✨</div>
+            <p>When a beacon is hit, a new beacon spawns elsewhere in the arena.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
