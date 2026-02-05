@@ -35,8 +35,6 @@ const elements = {
   modelToggleB: document.getElementById('modelToggleB'),
   saveModelB: document.getElementById('saveModelB'),
   summaryB: document.getElementById('summaryB'),
-  useProxy: document.getElementById('useProxy'),
-  proxyUrl: document.getElementById('proxyUrl'),
 
   // Arena
   canvas: document.getElementById('arenaCanvas'),
@@ -87,9 +85,9 @@ const SHIP_HIT_RADIUS = 32; // Match visual ship size (70px / 2 ≈ 35, reduced 
 const GAME_TIME_LIMIT = 300; // 5 minutes in seconds
 
 const palette = {
-  cobalt: '#4da0ff',
-  ember: '#f6a243',
-  bg: '#0a0d14'
+  cobalt: '#5fa8ff',
+  ember: '#f4a992',
+  bg: '#f6f7fb'
 };
 
 // ===== Game State =====
@@ -292,11 +290,7 @@ function saveConfig() {
         model: elements.modelB.value,
         apiKey: elements.apiKeyB.value
       }
-    ],
-    proxy: {
-      enabled: elements.useProxy.checked,
-      url: elements.proxyUrl.value
-    }
+    ]
   };
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload));
 }
@@ -317,10 +311,6 @@ function loadConfig() {
       elements.pathB.value = data.models[1].path || '';
       elements.modelB.value = data.models[1].model || '';
       elements.apiKeyB.value = data.models[1].apiKey || '';
-    }
-    if (data?.proxy) {
-      elements.useProxy.checked = Boolean(data.proxy.enabled);
-      elements.proxyUrl.value = data.proxy.url || elements.proxyUrl.value;
     }
   } catch (error) {
     // ignore malformed storage
@@ -399,16 +389,26 @@ function closeGameOver() {
   elements.gameOverModal.classList.add('hidden');
 }
 
-function toggleHistory(modelId) {
-  const viewer = modelId === 0 ? elements.historyViewerA : elements.historyViewerB;
-  const isHidden = viewer.classList.contains('hidden');
+let historyOpen = false;
+let activeHistoryTab = 0;
 
-  if (isHidden) {
-    updateHistoryViewer(modelId);
-    viewer.classList.remove('hidden');
-  } else {
-    viewer.classList.add('hidden');
+function setHistoryTab(modelId) {
+  if (historyOpen && activeHistoryTab === modelId) {
+    historyOpen = false;
+    elements.historyViewerA.classList.add('hidden');
+    elements.historyViewerB.classList.add('hidden');
+    elements.toggleHistoryA.classList.remove('active');
+    elements.toggleHistoryB.classList.remove('active');
+    return;
   }
+
+  historyOpen = true;
+  activeHistoryTab = modelId;
+  updateHistoryViewer(modelId);
+  elements.historyViewerA.classList.toggle('hidden', modelId !== 0);
+  elements.historyViewerB.classList.toggle('hidden', modelId !== 1);
+  elements.toggleHistoryA.classList.toggle('active', modelId === 0);
+  elements.toggleHistoryB.classList.toggle('active', modelId === 1);
 }
 
 function updateHistoryViewer(modelId) {
@@ -595,20 +595,11 @@ async function requestAction(modelId) {
       : { model, messages: conversationHistory[modelId] };
 
     const startTime = performance.now();
-    let response;
-    if (elements.useProxy.checked && elements.proxyUrl.value.trim()) {
-      response = await fetch(elements.proxyUrl.value.trim(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ baseUrl, path, apiKey, payload })
-      });
-    } else {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify(payload)
-      });
-    }
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(payload)
+    });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
@@ -1144,8 +1135,8 @@ elements.clearLog.addEventListener('click', () => {
   elements.logStream.innerHTML = '';
 });
 
-elements.toggleHistoryA.addEventListener('click', () => toggleHistory(0));
-elements.toggleHistoryB.addEventListener('click', () => toggleHistory(1));
+elements.toggleHistoryA.addEventListener('click', () => setHistoryTab(0));
+elements.toggleHistoryB.addEventListener('click', () => setHistoryTab(1));
 
 elements.errorDismiss.addEventListener('click', hideError);
 elements.errorReset.addEventListener('click', () => {
@@ -1204,12 +1195,6 @@ elements.saveModelB.addEventListener('click', () => {
   updateModelSummary(1);
   setModelCollapsed(1, true);
 });
-
-// Config persistence
-[elements.proxyUrl].forEach(input => {
-  input.addEventListener('input', saveConfig);
-});
-elements.useProxy.addEventListener('change', saveConfig);
 
 // Resize handling
 window.addEventListener('resize', () => {
