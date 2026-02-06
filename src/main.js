@@ -760,12 +760,12 @@ function updatePhysics(dt) {
   });
 
   // Check ship-asteroid collisions (GAME OVER condition)
-  state.ships.forEach(ship => {
+  for (const ship of state.ships) {
     for (let i = 0; i < state.beacons.length; i++) {
       const beacon = state.beacons[i];
       const distance = Math.hypot(ship.x - beacon.x, ship.y - beacon.y);
       if (distance < SHIP_HIT_RADIUS + BEACON_HIT_RADIUS) {
-        // Game over!
+        // Stop this physics tick immediately when the game ends.
         const who = ship.id === 0 ? 'Model A' : 'Model B';
         const winner = ship.id === 0 ? 'Model B' : 'Model A';
         logEvent(ship.id, who, 'CRASHED INTO ASTEROID - GAME OVER!');
@@ -773,7 +773,7 @@ function updatePhysics(dt) {
         return;
       }
     }
-  });
+  }
 
   // Check time limit (5 minutes)
   if (state.time >= GAME_TIME_LIMIT) {
@@ -1079,6 +1079,7 @@ function pauseMatch() {
   setLiveStatus('Paused', 'paused');
   elements.ticker.textContent = 'Simulation paused.';
   clearIntervals();
+  updatePlayPauseButton();
 }
 
 function clearIntervals() {
@@ -1169,6 +1170,12 @@ window.addEventListener('keydown', e => {
       gameOverModal.classList.add('hidden');
     }
   }
+
+  const target = e.target;
+  const isTypingTarget = target instanceof HTMLElement
+    && (target.matches('input, textarea, select, button') || target.isContentEditable);
+  if (isTypingTarget) return;
+
   if (e.key === ' ' || e.key === 'Spacebar') {
     e.preventDefault();
     elements.playPauseBtn.click();
