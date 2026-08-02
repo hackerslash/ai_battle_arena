@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Geist:wght@350;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
 </head>
 
@@ -20,8 +20,15 @@
     <!-- Header -->
     <header class="header">
       <div class="brand">
-        <div class="brand-icon">
-          <img src="/brand-icon.png" alt="AI Battle Arena" />
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="var(--color-cobalt)" stroke-width="1.4" />
+            <circle cx="12" cy="12" r="2" fill="var(--color-cobalt)" />
+            <line x1="12" y1="1.5" x2="12" y2="5.5" stroke="var(--color-ember)" stroke-width="1.4" />
+            <line x1="12" y1="18.5" x2="12" y2="22.5" stroke="var(--color-ember)" stroke-width="1.4" />
+            <line x1="1.5" y1="12" x2="5.5" y2="12" stroke="var(--color-ember)" stroke-width="1.4" />
+            <line x1="18.5" y1="12" x2="22.5" y2="12" stroke="var(--color-ember)" stroke-width="1.4" />
+          </svg>
         </div>
         <div class="brand-text">
           <h1>AI Battle Arena</h1>
@@ -104,24 +111,26 @@
               </span>
             </div>
             <div class="model-body">
-              <div class="input-group">
-                <label>Base URL</label>
-                <input type="text" id="baseUrlA" value="https://api.openai.com" placeholder="https://api.openai.com" />
-              </div>
-              <div class="input-group">
-                <label>Path</label>
-                <input type="text" id="pathA" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
-              </div>
-              <div class="input-group">
-                <label>Model</label>
-                <input type="text" id="modelA" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
-              </div>
-              <div class="input-group">
-                <label>API Key</label>
-                <input type="password" id="apiKeyA" placeholder="sk-..." />
-              </div>
-              <div class="model-actions">
-                <button class="btn btn-primary btn-sm" id="saveModelA">Save Model A</button>
+              <div class="model-body-inner">
+                <div class="input-group">
+                  <label>Base URL</label>
+                  <input type="text" id="baseUrlA" value="https://api.openai.com" placeholder="https://api.openai.com" />
+                </div>
+                <div class="input-group">
+                  <label>Path</label>
+                  <input type="text" id="pathA" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+                </div>
+                <div class="input-group">
+                  <label>Model</label>
+                  <input type="text" id="modelA" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+                </div>
+                <div class="input-group">
+                  <label>API Key</label>
+                  <input type="password" id="apiKeyA" placeholder="sk-..." />
+                </div>
+                <div class="model-actions">
+                  <button class="btn btn-primary btn-sm" id="saveModelA">Save Model A</button>
+                </div>
               </div>
             </div>
           </div>
@@ -145,24 +154,26 @@
               </span>
             </div>
             <div class="model-body">
-              <div class="input-group">
-                <label>Base URL</label>
-                <input type="text" id="baseUrlB" value="https://api.openai.com" placeholder="https://api.openai.com" />
-              </div>
-              <div class="input-group">
-                <label>Path</label>
-                <input type="text" id="pathB" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
-              </div>
-              <div class="input-group">
-                <label>Model</label>
-                <input type="text" id="modelB" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
-              </div>
-              <div class="input-group">
-                <label>API Key</label>
-                <input type="password" id="apiKeyB" placeholder="sk-..." />
-              </div>
-              <div class="model-actions">
-                <button class="btn btn-primary btn-sm" id="saveModelB">Save Model B</button>
+              <div class="model-body-inner">
+                <div class="input-group">
+                  <label>Base URL</label>
+                  <input type="text" id="baseUrlB" value="https://api.openai.com" placeholder="https://api.openai.com" />
+                </div>
+                <div class="input-group">
+                  <label>Path</label>
+                  <input type="text" id="pathB" value="/v1/chat/completions" placeholder="/v1/chat/completions" />
+                </div>
+                <div class="input-group">
+                  <label>Model</label>
+                  <input type="text" id="modelB" value="gpt-4o-mini" placeholder="gpt-4o-mini" />
+                </div>
+                <div class="input-group">
+                  <label>API Key</label>
+                  <input type="password" id="apiKeyB" placeholder="sk-..." />
+                </div>
+                <div class="model-actions">
+                  <button class="btn btn-primary btn-sm" id="saveModelB">Save Model B</button>
+                </div>
               </div>
             </div>
           </div>

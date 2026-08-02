@@ -1,0 +1,81 @@
+/* Hallmark tokens · genre: atmospheric · theme: Midnight */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — elevation via lightness, not shadow */
+  --color-paper: oklch(15% 0.014 255);
+  --color-paper-2: oklch(19% 0.017 255);
+  --color-paper-3: oklch(24% 0.019 255);
+  --color-paper-4: oklch(29% 0.021 255);
+
+  --color-rule: oklch(34% 0.022 255);
+  --color-rule-strong: oklch(46% 0.026 255);
+
+  /* Ink */
+  --color-ink: oklch(95% 0.006 255);
+  --color-ink-secondary: oklch(78% 0.012 255);
+  --color-muted: oklch(60% 0.014 255);
+
+  /* System accent — signal cyan. Used sparingly: focus, primary CTA, live pulse. */
+  --color-accent: oklch(74% 0.15 222);
+  --color-accent-soft: oklch(74% 0.15 222 / 16%);
+  --color-accent-ink: oklch(14% 0.02 222);
+  --color-focus: oklch(82% 0.15 222);
+
+  /* Combatant identity — functional data colour, not decoration */
+  --color-cobalt: oklch(74% 0.13 228);
+  --color-cobalt-soft: oklch(74% 0.13 228 / 16%);
+  --color-ember: oklch(75% 0.15 48);
+  --color-ember-soft: oklch(75% 0.15 48 / 16%);
+
+  /* Status */
+  --color-sage: oklch(80% 0.15 152);
+  --color-sage-soft: oklch(80% 0.15 152 / 16%);
+  --color-sand: oklch(82% 0.11 85);
+  --color-sand-soft: oklch(82% 0.11 85 / 16%);
+  --color-danger: oklch(70% 0.18 25);
+  --color-danger-soft: oklch(70% 0.18 25 / 14%);
+
+  /* Type */
+  --font-display: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.3125rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2rem;
+  --text-display: clamp(1.9rem, 3vw + 1rem, 2.5rem);
+
+  /* Space — 4pt scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 30px;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 9px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --pill: 999px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 30px rgba(2, 6, 16, 0.5);
+  --shadow-3: 0 24px 60px rgba(2, 6, 16, 0.6);
+
+  /* Motion — Midnight scale (0.9x), technical/snappy */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 110ms;
+  --dur-short: 200ms;
+  --dur-long: 380ms;
+}
